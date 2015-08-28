@@ -10,12 +10,12 @@ module Delta
       Delta.config.adapters.each do |adapter|
         Delta::Adapter
           .build_klass(adapter)
-          .new(self, deltas_cache.serialize)
+          .new(self, serialized_deltas_cache)
           .persist!
       end
     end
 
-    def deltas
+    def serialized_deltas_cache
       deltas_cache.serialize
     end
 

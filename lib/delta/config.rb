@@ -2,6 +2,9 @@ module Delta
   class Config
     attr_reader :adapters
 
+    ## TODO: user model name
+    ##       user foreign key???
+
     class Adapters
       class UndefinedAdapterException < Exception
         def initialize(adapter)

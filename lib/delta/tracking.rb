@@ -1,7 +1,25 @@
+require 'thread'
+
 module Delta
   module Tracking
-    def self.included(base)
-      base.extend ClassMethods
+
+    @@models = Set.new
+    @@lock   = Mutex.new
+
+    class << self
+      def included(base)
+        base.extend ClassMethods
+      end
+
+      def models
+        @@models
+      end
+
+      def add_model(model)
+        @@lock.synchronize do
+          @@models << model
+        end
+      end
     end
 
     module ClassMethods
@@ -17,12 +35,15 @@ module Delta
           self.delta_associations = reflections.select(&filter_proc)
         end
 
+        Tracking.add_model(self)
         send :include, Changes
 
         delta_associations.each do |assoc_name, reflection|
           case reflection.macro
           when :has_many
             track_has_many_association(assoc_name)
+          when :belongs_to
+            puts "TODO Belongs to!"
           end
         end
       end
