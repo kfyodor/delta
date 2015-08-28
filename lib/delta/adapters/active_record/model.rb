@@ -11,7 +11,12 @@ module Delta
 
       class Model < ::ActiveRecord::Base
         self.table_name = "deltas"
+
         belongs_to :model, polymorphic: true
+
+        def readonly?
+          true
+        end
       end
 
       Delta::Tracking.models.each { |m| m.send :include, Ext }
