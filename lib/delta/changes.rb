@@ -2,6 +2,10 @@ module Delta
   module Changes
     def self.included(base)
       base.after_update :persist_changes!
+
+      base.after_update  :reset_cache!
+      base.after_create  :reset_cache!
+      base.after_destroy :reset_cache!
     end
 
     def persist_changes!
@@ -28,6 +32,10 @@ module Delta
     end
 
     private
+
+    def reset_cache!
+      @deltas_cache = Cache.new
+    end
 
     class Cache
       attr_accessor :columns, :associations
@@ -75,7 +83,7 @@ module Delta
     end
 
     def deltas_cache
-      @delta_cache ||= Delta::Changes::Cache.new
+      @deltas_cache ||= Cache.new
     end
   end
 end

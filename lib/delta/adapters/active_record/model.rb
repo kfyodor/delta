@@ -15,7 +15,7 @@ module Delta
         belongs_to :model, polymorphic: true
 
         def readonly?
-          true
+          persisted?
         end
       end
 
