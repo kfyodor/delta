@@ -1,3 +1,6 @@
+require 'set'
+require 'thread'
+
 module Delta
   class Config
     attr_reader :adapters
@@ -13,7 +16,8 @@ module Delta
       end
 
       def initialize(adapters)
-        @adapters = []
+        @adapters = Set.new
+        @lock     = Mutex.new
         adapters.each { |a| self.<<(a) }
       end
 
@@ -23,16 +27,25 @@ module Delta
 
       def <<(adapter)
         begin
-          require "delta/adapters/active_record"
-          @adapters << adapter
-        rescue LoadError
+          require File.expand_path("../adapters/#{adapter}", __FILE__)
+          kl = Delta::Adapter.build_klass(adapter)
+
+          @lock.synchronize do
+            if @adapters.add?(kl)
+              Delta::Tracking.add_adapter_callback do |model|
+                kl.register(model)
+              end
+            end
+          end
+        rescue LoadError, NameError => e
+          puts e.message
           raise UndefinedAdapterException.new(adapter)
         end
       end
     end
 
     def initialize
-      self.adapters = ["active_record"]
+      @adapters = Adapters.new(["active_record"])
     end
 
     def adapters=(adapter_names)

@@ -1,7 +1,7 @@
 require 'delta/version'
 require 'delta/config'
 require 'delta/tracking'
-require 'delta/changes'
+require 'delta/tracker'
 require 'delta/adapter'
 
 require 'thread'
@@ -16,8 +16,10 @@ module Delta
   class << self
     attr_accessor :config
 
+    @@config = Config.new
+
     def config
-      @config ||= Config.new
+      @@config
     end
 
     def configure
