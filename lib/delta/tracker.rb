@@ -1,7 +1,9 @@
+# TODO: refactor this chaos ASAP
 module Delta
   class Tracker
     attr_reader :attributes,
                 :has_many_associations,
+                :has_one_associations,
                 :belongs_to_associations
 
     def initialize(klass, field_names, options = {})
@@ -9,10 +11,11 @@ module Delta
       @field_names = field_names.map(&:to_s)
       @options     = options
 
-      @has_many_associations = {}
+      @has_many_associations   = {}
       @belongs_to_associations = {}
-      @attributes = {}
+      @has_one_associations    = {}
 
+      @attributes   = {}
       @deltas_cache = []
 
       build_attributes
@@ -20,11 +23,9 @@ module Delta
     end
 
     def track!
-      # Track has_many assocs via callbacks (think about better solution?)
       @has_many_associations.each do |assoc_name, reflection|
-        key = reflection.association_primary_key
-
         @klass.class_eval do
+          key = reflection.association_primary_key
           send("after_add_for_#{assoc_name}").<< ->(_, model, assoc){
             model.class.delta_tracker.send :persist_or_cache!, model, {
               name: assoc_name,
@@ -42,11 +43,39 @@ module Delta
               object: { key => assoc.send(key) }
             }
           }
+        end
+      end
 
-          # Track attributes and belongs_to assocs via AM::Dirty
-          after_update do
-            self.class.delta_tracker.send :persist_attrs!, self
-          end
+      @has_one_associations.each do |assoc_name, reflection|
+        key = reflection.association_primary_key
+        # TODO build_#{assoc}
+
+        ["#{assoc_name}=", "create_#{assoc_name}"].each do |method|
+          @klass.class_eval %Q{
+            def #{method}(*args, &block)
+              super(*args, &block).tap do |assoc|
+                return unless assoc.persisted?
+
+                self.class.delta_tracker.send :persist_or_cache!, self, {
+                  name: "#{assoc_name}",
+                  action: "C",
+                  timestamp: Time.now.to_i,
+                  object: { "#{key}" => assoc.send("#{key}") }
+                }
+              end
+            end
+          }
+        end
+      end
+
+      # Track attributes and belongs_to assocs via AM::Dirty
+      @klass.class_eval do
+        after_update do
+          self.class.delta_tracker.send :persist_attrs!, self
+        end
+
+        after_commit do
+          self.class.delta_tracker.send :reset_deltas_cache!
         end
       end
     end
@@ -89,8 +118,11 @@ module Delta
       persist_or_cache!(model, deltas)
     end
 
+
+    # move to instance
     def persist_or_cache!(model, deltas)
       deltas = [deltas] unless deltas.is_a?(Array)
+
       @deltas_cache += deltas
 
       if model.persisted?
@@ -101,8 +133,12 @@ module Delta
             .persist!
         end
 
-        @deltas_cache = []
+        reset_deltas_cache!
       end
+    end
+
+    def reset_deltas_cache!
+      @deltas_cache = []
     end
 
     def build_attributes
@@ -119,8 +155,8 @@ module Delta
             @has_many_associations[assoc_name] = reflection
           when :belongs_to
             @belongs_to_associations[assoc_name] = reflection
-          else
-            puts "Unsupported macro: #{reflection.macro}"
+          when :has_one
+            @has_one_associations[assoc_name] = reflection
           end
         end
       end

@@ -8,6 +8,7 @@ module Delta
       module Ext
         def self.included(base)
           base.has_many :deltas,
+            -> { order('created_at') },
             class_name: "Delta::Adapter::ActiveRecord::Model",
             as: :model
         end

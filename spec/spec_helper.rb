@@ -1,7 +1,9 @@
 $LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'rails/all'
+require 'rspec/rails'
 
-require 'active_record'
 require 'delta'
+
 
 config = YAML.load_file(File.expand_path('../config/database.yml', __FILE__))['test']
 
@@ -19,10 +21,6 @@ CreateDeltas.new.change
 Dir[File.expand_path('../models/*.rb', __FILE__)].each { |f| require f }
 
 RSpec.configure do |c|
-  c.around do |ex|
-    ActiveRecord::Base.transaction do
-      ex.run
-      raise ActiveRecord::Rollback
-    end
-  end
+  require 'test_after_commit'
+  c.use_transactional_fixtures = true
 end
