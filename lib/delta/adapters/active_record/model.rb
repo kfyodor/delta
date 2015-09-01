@@ -18,6 +18,7 @@ module Delta
         self.table_name = "deltas"
 
         belongs_to :model, polymorphic: true
+        belongs_to :user
 
         def readonly?
           persisted?

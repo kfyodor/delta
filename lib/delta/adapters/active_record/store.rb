@@ -13,7 +13,8 @@ module Delta
 
         def attrs
           @attrs ||= {
-            object: @changes
+            object: @changes,
+            user:   Delta.current_user
           }
         end
       end

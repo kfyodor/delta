@@ -1,21 +1,22 @@
 require 'delta/version'
+
+require 'delta/config/adapters'
 require 'delta/config'
+
 require 'delta/tracking'
 require 'delta/tracker'
 require 'delta/adapter'
 
-require 'thread'
+require 'delta/controller'
+
+require 'request_store'
 
 # TODO:
-#   - belongs_to relationships
-#   - controller helpers for current_user
 #   - customize associations columns
-#   - different persistance options: redis, queue, kafka, whatever (active record is default)
+#   - different persistance options: redis, mq, kafka, whatever (active record is default)
 
 module Delta
   class << self
-    attr_accessor :config
-
     @@config = Config.new
 
     def config
@@ -25,7 +26,25 @@ module Delta
     def configure
       yield(config)
     end
+
+    def current_user=(user)
+      store[:current_user] = user
+    end
+
+    def current_user
+      store[:current_user]
+    end
+
+    def store
+      @store ||= RequestStore.store
+    end
   end
 end
 
-ActiveRecord::Base.send :include, Delta::Tracking
+if defined?(ActiveRecord::Base)
+  ActiveRecord::Base.send :include, Delta::Tracking
+end
+
+if defined?(ActionController::Base)
+  ActionController::Base.send :include, Delta::Controller
+end
