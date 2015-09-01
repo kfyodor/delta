@@ -1,6 +1,22 @@
 # TODO: refactor this chaos ASAP
 module Delta
   class Tracker
+
+    module Cache
+      def cache_deltas(deltas)
+        @deltas_cache ||= []
+        @deltas_cache += deltas
+      end
+
+      def deltas_cache
+        @deltas_cache || []
+      end
+
+      def reset_deltas_cache!
+        @deltas_cache = []
+      end
+    end
+
     attr_reader :attributes,
                 :has_many_associations,
                 :has_one_associations,
@@ -16,13 +32,14 @@ module Delta
       @has_one_associations    = {}
 
       @attributes   = {}
-      @deltas_cache = []
 
       build_attributes
       build_associations
     end
 
     def track!
+      @klass.send :include, Cache
+
       @has_many_associations.each do |assoc_name, reflection|
         @klass.class_eval do
           key = reflection.association_primary_key
@@ -74,9 +91,7 @@ module Delta
           self.class.delta_tracker.send :persist_attrs!, self
         end
 
-        after_commit do
-          self.class.delta_tracker.send :reset_deltas_cache!
-        end
+        after_commit { reset_deltas_cache! }
       end
     end
 
@@ -118,27 +133,22 @@ module Delta
       persist_or_cache!(model, deltas)
     end
 
-
     # move to instance
     def persist_or_cache!(model, deltas)
       deltas = [deltas] unless deltas.is_a?(Array)
 
-      @deltas_cache += deltas
+      model.cache_deltas(deltas)
 
       if model.persisted?
         Delta.config.adapters.each do |adapter|
           "#{adapter}::Store"
             .constantize
-            .new(model, @deltas_cache)
+            .new(model, model.deltas_cache)
             .persist!
         end
 
-        reset_deltas_cache!
+        model.reset_deltas_cache!
       end
-    end
-
-    def reset_deltas_cache!
-      @deltas_cache = []
     end
 
     def build_attributes
