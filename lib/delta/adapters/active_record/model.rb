@@ -24,8 +24,6 @@ module Delta
           persisted?
         end
       end
-
-      Delta::Tracking.models.each { |m| m.send :include, Ext }
     end
   end
 end
