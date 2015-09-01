@@ -16,9 +16,7 @@ module Delta
       def model_added(model)
         @@lock.synchronize do
           if @@models.add?(model)
-            @@adapter_callbacks.each do |proc|
-              proc.call model
-            end
+            @@adapter_callbacks.each { |proc| proc.call model }
           end
         end
       end
@@ -32,18 +30,18 @@ module Delta
       end
 
       def add_model(model)
-        @@lock.synchronize do
-          @@models << model
-        end
+        @@lock.synchronize { @@models << model }
       end
     end
 
     module ClassMethods
       def track_deltas(*fields)
         class_attribute :delta_tracker
+
         self.delta_tracker = Delta::Tracker.new(self, fields, {})
 
         Tracking.model_added(self)
+
         delta_tracker.track!
       end
     end

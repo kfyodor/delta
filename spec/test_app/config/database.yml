@@ -1,0 +1,6 @@
+test:
+  adapter: postgresql
+  host: localhost
+  port: 5431
+  user: iamakingbee
+  database: delta_test_db

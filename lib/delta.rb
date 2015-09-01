@@ -12,7 +12,7 @@ require 'delta/controller'
 require 'request_store'
 
 # TODO:
-#   - customize associations columns
+#   - customize associations columns for serialization
 #   - different persistance options: redis, mq, kafka, whatever (active record is default)
 
 module Delta
@@ -41,10 +41,10 @@ module Delta
   end
 end
 
-if defined?(ActiveRecord::Base)
+if defined?(ActiveRecord) && defined?(ActiveRecord::Base)
   ActiveRecord::Base.send :include, Delta::Tracking
 end
 
-if defined?(ActionController::Base)
+if defined?(ActionController) && defined?(ActionController::Base)
   ActionController::Base.send :include, Delta::Controller
 end

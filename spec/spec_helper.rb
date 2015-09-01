@@ -1,24 +1,19 @@
 $LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
-require 'rails/all'
-require 'rspec/rails'
 
+ENV['RAILS_ENV'] = 'test'
+
+require 'rails/all'
+require 'test_app/application'
 require 'delta'
 
+require 'rspec/rails'
 
-config = YAML.load_file(File.expand_path('../config/database.yml', __FILE__))['test']
+TestApp::Application.initialize!
 
-ActiveRecord::Base.establish_connection config
-
-ActiveRecord::Tasks::DatabaseTasks.load_schema_for(
-  config,
-  :ruby,
-  File.expand_path("../config/schema.rb", __FILE__)
-)
+ActiveRecord::Migration.maintain_test_schema!
 
 require File.expand_path('lib/generators/delta/templates/create_deltas.rb')
 CreateDeltas.new.change
-
-Dir[File.expand_path('../models/*.rb', __FILE__)].each { |f| require f }
 
 RSpec.configure do |c|
   require 'test_after_commit'
