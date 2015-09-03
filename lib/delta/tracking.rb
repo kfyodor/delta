@@ -37,7 +37,6 @@ module Delta
       def track_deltas(*fields, **opts)
         class_attribute :delta_tracker
         self.delta_tracker = Tracker.new(self, fields, opts)
-
         Tracking.model_added(self)
 
         delta_tracker.track!
