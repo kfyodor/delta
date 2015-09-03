@@ -64,7 +64,11 @@ module Delta
       @trackable_fields[:attributes] ||= {}
       assert_unique_field!(:attributes, field_name)
 
-      @trackable_fields[:attributes][field_name] = attr
+      @trackable_fields[:attributes][field_name] = Attribute.create(
+        field_name,
+        attr,
+        opts
+      )
     end
 
     def add_association(field_name, reflection, opts = {})

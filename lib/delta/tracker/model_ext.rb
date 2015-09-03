@@ -32,37 +32,21 @@ module Delta
       def persist_delta_fields!
         return if changes.empty?
 
-        ts = Time.now.to_i
+        ts     = Time.now.to_i
         deltas = []
 
-        collect_delta_belongs_to_associations(deltas, ts)
-        collect_delta_attributes(deltas, ts)
+        fields = delta_tracker
+          .belongs_to_associations
+          .merge(delta_tracker.attributes)
 
-        unless deltas.empty?
-          delta_tracker.persist!(self, deltas)
-        end
-      end
-
-      private
-
-      def collect_delta_belongs_to_associations(deltas, timestamp)
-        delta_tracker.belongs_to_associations.each do |name, assoc|
-          if serialized = assoc.serialize(self, "C", timestamp: timestamp)
+        fields.each do |name, field|
+          if serialized = field.serialize(self, "C", timestamp: ts)
             deltas << serialized
           end
         end
-      end
 
-      def collect_delta_attributes(deltas, timestamp)
-        delta_tracker.attributes.each do |col, _|
-          next unless changed_column = changes[col]
-
-          deltas << {
-            name: col,
-            action: "C",
-            timestamp: timestamp,
-            object: changed_column.last
-          }
+        unless deltas.empty?
+          delta_tracker.persist!(self, deltas)
         end
       end
     end
