@@ -12,28 +12,6 @@ module Delta
       @trackable_class.send :include, ModelExt
       build_trackable_fields
 
-      @trackable_fields[:has_one_associations].each do |assoc_name, reflection|
-        key = reflection.association_primary_key
-        # TODO build_#{assoc}
-
-        ["#{assoc_name}=", "create_#{assoc_name}"].each do |method|
-          @trackable_class.class_eval %Q{
-            def #{method}(*args, &block)
-              super(*args, &block).tap do |assoc|
-                return unless assoc.persisted?
-
-                self.class.delta_tracker.send :persist_or_cache!, self, {
-                  name: "#{assoc_name}",
-                  action: "C",
-                  timestamp: Time.now.to_i,
-                  object: { "#{key}" => assoc.send("#{key}") }
-                }
-              end
-            end
-          }
-        end
-      end
-
       # Track attributes and belongs_to assocs via AM::Dirty
       @trackable_class.class_eval do
         after_update do
@@ -122,13 +100,17 @@ module Delta
     end
 
     def add_association(field_name, reflection)
-      assert_reflection_macro!(field_name, reflection)
-
-      key = "#{reflection.macro}_associations".to_sym
+      key   = "#{reflection.macro}_associations".to_sym
+      klass = case reflection.macro
+              when :has_many
+                HasMany
+              when :has_one
+                HasOne
+              end
 
       @trackable_fields[key] ||= {}
-      @trackable_fields[key][field_name] = if reflection.macro == :has_many
-                                             HasMany.create(@trackable_class, field_name, reflection)
+      @trackable_fields[key][field_name] = if klass
+                                             klass.create(@trackable_class, field_name, reflection)
                                            else
                                              reflection
                                            end

@@ -3,8 +3,7 @@ module Delta
     module ModelExt
       def self.included(base)
         base.send :include, Cache
-        base.send :include, HasManyMethods
-        base.send :include, HasOneMethods
+        base.send :include, DeltaAssociationHelpers
       end
 
       module Cache
@@ -23,27 +22,31 @@ module Delta
       end
     end
 
-    module HasManyMethods
-      def delta_after_add(assoc_name, primary_key, obj)
-        self.class.delta_tracker.send :persist_or_cache!, self, {
-          name: assoc_name,
-          action: "A",
-          timestamp: Time.now.to_i,
-          object: { primary_key => obj.send(primary_key) }
-        }
+    module DeltaAssociationHelpers
+      def delta_association_add(assoc_name, obj)
+        delta_association_invoke_action(assoc_name, obj, "A")
       end
 
-      def delta_after_remove(assoc_name, primary_key, obj)
+      def delta_association_remove(assoc_name, obj)
+        delta_association_invoke_action(assoc_name, obj, "R")
+      end
+
+      def delta_association_change(assoc_name, obj)
+        delta_association_invoke_action(assoc_name, obj, "C")
+      end
+
+      private
+
+      def delta_association_invoke_action(assoc_name, obj, action)
+        key = obj.class.primary_key
+
         self.class.delta_tracker.send :persist_or_cache!, self, {
           name: assoc_name,
-          action: "R",
+          action: action,
           timestamp: Time.now.to_i,
-          object: { primary_key => obj.send(primary_key) }
+          object: { key => obj.send(key) }
         }
       end
-    end
-
-    module HasOneMethods
     end
   end
 end

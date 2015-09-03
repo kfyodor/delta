@@ -6,7 +6,10 @@ require 'delta/config'
 require 'delta/tracking'
 
 require 'delta/tracker'
+require 'delta/tracker/association'
 require 'delta/tracker/has_many'
+require 'delta/tracker/has_one'
+
 require 'delta/tracker/model_ext'
 
 require 'delta/adapter'
