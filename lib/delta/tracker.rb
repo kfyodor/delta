@@ -17,6 +17,8 @@ module Delta
     end
 
     def add_trackable_field(field_name, opts = {})
+      assert_unique_field!(field_name)
+
       if attr = @trackable_class.columns_hash[field_name]
         add_attribute(field_name, attr, opts)
       elsif reflection = @trackable_class.reflections[field_name]
@@ -38,7 +40,11 @@ module Delta
     end
 
     def trackable_fields
-      @trackable_fields.values.reduce :merge
+      if @trackable_fields.empty?
+        {}
+      else
+        @trackable_fields.values.reduce :merge
+      end
     end
 
     def persist!(model, deltas)
@@ -62,8 +68,6 @@ module Delta
 
     def add_attribute(field_name, attr, opts)
       @trackable_fields[:attributes] ||= {}
-      assert_unique_field!(:attributes, field_name)
-
       @trackable_fields[:attributes][field_name] = Attribute.create(
         field_name,
         attr,
@@ -72,9 +76,7 @@ module Delta
     end
 
     def add_association(field_name, reflection, opts = {})
-      key = "#{reflection.macro}_associations".to_sym
-      assert_unique_field!(key, field_name)
-
+      key   = "#{reflection.macro}_associations".to_sym
       klass = case reflection.macro
               when :has_many
                 HasMany
@@ -96,8 +98,8 @@ module Delta
       )
     end
 
-    def assert_unique_field!(key, field_name)
-      raise FieldAlreadyAdded.new(field_name) if send(key)[field_name]
+    def assert_unique_field!(field_name)
+      raise FieldAlreadyAdded.new(field_name) if trackable_fields[field_name]
     end
   end
 end
