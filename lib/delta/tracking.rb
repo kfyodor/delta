@@ -9,6 +9,7 @@ module Delta
 
     class << self
       def included(base)
+        base.class_attribute :delta_tracker
         base.extend ClassMethods
       end
 
@@ -35,11 +36,23 @@ module Delta
 
     module ClassMethods
       def track_deltas(*fields, **opts)
-        class_attribute :delta_tracker
-        self.delta_tracker = Tracker.new(self, fields, opts)
-        Tracking.model_added(self)
+        init_delta_tracker(opts)
+        delta_tracker.add_trackable_fields(fields)
+      end
 
-        delta_tracker.track!
+      def track_deltas_on(field, field_opts = {})
+        init_delta_tracker({})
+        delta_tracker.add_trackable_field(field, field_opts)
+      end
+
+      private
+
+      def init_delta_tracker(opts)
+        unless self.delta_tracker
+          self.delta_tracker = Tracker.new(self, opts)
+          Tracking.model_added(self)
+          self.delta_tracker.track!
+        end
       end
     end
   end

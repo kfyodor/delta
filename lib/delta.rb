@@ -9,6 +9,7 @@ require 'delta/tracker'
 require 'delta/tracker/association'
 require 'delta/tracker/has_many'
 require 'delta/tracker/has_one'
+require 'delta/tracker/belongs_to'
 
 require 'delta/tracker/model_ext'
 
@@ -50,8 +51,6 @@ module Delta
     end
   end
 
-
-
   class UnsupportedAssotiationType < Exception
     def initialize(field_name)
       @message = "Unsupported association macro for `#{field_name}`"
@@ -61,6 +60,12 @@ module Delta
   class NonTrackableField < Exception
     def initialize(field_name)
       @message = "`#{field_name}` is not an attribute or association"
+    end
+  end
+
+  class FieldAlreadyAdded < Exception
+    def initialize(field_name)
+      @message = "`#{field_name}` is already trackable"
     end
   end
 end

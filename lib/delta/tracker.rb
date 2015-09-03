@@ -1,29 +1,44 @@
 module Delta
   class Tracker
-    def initialize(klass, field_names, options = {})
+    def initialize(klass, options = {})
       @trackable_class  = klass
-      @field_names      = field_names.map(&:to_s)
       @trackable_fields = {}
       @options          = options
     end
 
     def track!
-      @trackable_class.send :include, ModelExt
+      @trackable_class.class_eval { include ModelExt }
+    end
 
-      build_trackable_fields
-
-      @trackable_class.class_eval do
-        after_update { persist_delta_fields! }
-        after_commit { reset_deltas_cache! }
+    def add_trackable_fields(fields)
+      fields.map(&:to_s).each do |field_name|
+        add_trackable_field(field_name)
       end
     end
 
-    def attributes
-      @trackable_fields[:attributes]
+    def add_trackable_field(field_name, opts = {})
+      if attr = @trackable_class.columns_hash[field_name]
+        add_attribute(field_name, attr, opts)
+      elsif reflection = @trackable_class.reflections[field_name]
+        add_association(field_name, reflection, opts)
+      else
+        raise NonTrackableField.new(field_name)
+      end
     end
 
-    def belongs_to_associations
-      @trackable_fields[:belongs_to_associations]
+    %w[
+      attributes
+      has_many_associations
+      has_one_associations
+      belongs_to_associations
+    ].each do |m|
+      define_method m do
+        @trackable_fields[m.to_sym] || {}
+      end
+    end
+
+    def trackable_fields
+      @trackable_fields.values.reduce :merge
     end
 
     def persist!(model, deltas)
@@ -45,39 +60,40 @@ module Delta
 
     private
 
-    def build_trackable_fields
-      @field_names.each do |field_name|
-        add_trackable_field(field_name)
-      end
-    end
-
-    def add_trackable_field(field_name)
-      if attr = @trackable_class.columns_hash[field_name]
-        add_attribute(field_name, attr)
-      elsif reflection = @trackable_class.reflections[field_name]
-        add_association(field_name, reflection)
-      else
-        raise NonTrackableField.new(field_name)
-      end
-    end
-
-    def add_attribute(field_name, attr)
+    def add_attribute(field_name, attr, opts)
       @trackable_fields[:attributes] ||= {}
+      assert_unique_field!(:attributes, field_name)
+
       @trackable_fields[:attributes][field_name] = attr
     end
 
-    def add_association(field_name, reflection)
-      case reflection.macro
-      when :has_many
-        HasMany.create(@trackable_class, field_name, reflection)
-      when :has_one
-        HasOne.create(@trackable_class, field_name, reflection)
-      when :belongs_to
-        @trackable_fields[:belongs_to_associations] ||= {}
-        @trackable_fields[:belongs_to_associations][field_name] = reflection
-      else
-        raise UnsupportedAssotiationType.new(field_name)
-      end
+    def add_association(field_name, reflection, opts = {})
+      key = "#{reflection.macro}_associations".to_sym
+      assert_unique_field!(key, field_name)
+
+      klass = case reflection.macro
+              when :has_many
+                HasMany
+              when :has_one
+                HasOne
+              when :belongs_to
+                BelongsTo
+              else
+                raise UnsupportedAssotiationType.new(field_name)
+              end
+
+      @trackable_fields[key] ||= {}
+
+      @trackable_fields[key][field_name] = klass.create(
+        @trackable_class,
+        field_name,
+        reflection,
+        opts
+      )
+    end
+
+    def assert_unique_field!(key, field_name)
+      raise FieldAlreadyAdded.new(field_name) if send(key)[field_name]
     end
   end
 end

@@ -5,6 +5,11 @@ module Delta
         base.send :include, Cache
         base.send :include, DeltaFieldsMethods
         base.send :include, DeltaAssociationsMethods
+
+        base.class_eval do
+          after_update { persist_delta_fields! }
+          after_commit { reset_deltas_cache! }
+        end
       end
 
       module Cache
@@ -41,17 +46,10 @@ module Delta
       private
 
       def collect_delta_belongs_to_associations(deltas, timestamp)
-        delta_tracker.belongs_to_associations.each do |name, reflection|
-          key = reflection.foreign_key
-
-          next unless changed_assoc = changes[key]
-
-          deltas << {
-            name: name,
-            action: "C",
-            timestamp: timestamp,
-            object: { reflection.association_primary_key => changed_assoc.last }
-          }
+        delta_tracker.belongs_to_associations.each do |name, assoc|
+          if serialized = assoc.serialize(self, "C", timestamp: timestamp)
+            deltas << serialized
+          end
         end
       end
 
@@ -85,14 +83,11 @@ module Delta
       private
 
       def delta_association_invoke_action(assoc_name, obj, action)
-        key = obj.class.primary_key
+        serialized = delta_tracker
+          .trackable_fields[assoc_name]
+          .serialize(obj, action)
 
-        self.class.delta_tracker.send :persist!, self, {
-          name: assoc_name,
-          action: action,
-          timestamp: Time.now.to_i,
-          object: { key => obj.send(key) }
-        }
+        delta_tracker.persist! self, serialized
       end
     end
   end
