@@ -42,7 +42,7 @@ module Delta
 
       def track_deltas_on(field, field_opts = {})
         init_delta_tracker({})
-        delta_tracker.add_trackable_field(field, field_opts)
+        delta_tracker.add_trackable_field(field.to_s, field_opts)
       end
 
       private

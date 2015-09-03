@@ -8,4 +8,6 @@ class Order < ActiveRecord::Base
   has_many :items, through: :line_items
 
   validates :address, presence: true
+
+  track_deltas :address, :items, :user, :image
 end
