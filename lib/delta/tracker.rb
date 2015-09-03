@@ -1,74 +1,23 @@
 # TODO: refactor this chaos ASAP
 module Delta
   class Tracker
-
-    module Cache
-      def cache_deltas(deltas)
-        @deltas_cache ||= []
-        @deltas_cache += deltas
-      end
-
-      def deltas_cache
-        @deltas_cache || []
-      end
-
-      def reset_deltas_cache!
-        @deltas_cache = []
-      end
-    end
-
-    attr_reader :attributes,
-                :has_many_associations,
-                :has_one_associations,
-                :belongs_to_associations
-
     def initialize(klass, field_names, options = {})
-      @klass       = klass
-      @field_names = field_names.map(&:to_s)
-      @options     = options
-
-      @has_many_associations   = {}
-      @belongs_to_associations = {}
-      @has_one_associations    = {}
-
-      @attributes   = {}
-
-      build_attributes
-      build_associations
+      @trackable_class  = klass
+      @field_names      = field_names.map(&:to_s)
+      @trackable_fields = {}
+      @options          = options
     end
 
     def track!
-      @klass.send :include, Cache
+      @trackable_class.send :include, ModelExt
+      build_trackable_fields
 
-      @has_many_associations.each do |assoc_name, reflection|
-        @klass.class_eval do
-          key = reflection.association_primary_key
-          send("after_add_for_#{assoc_name}").<< ->(_, model, assoc){
-            model.class.delta_tracker.send :persist_or_cache!, model, {
-              name: assoc_name,
-              action: "A",
-              timestamp: Time.now.to_i,
-              object: { key => assoc.send(key) }
-            }
-          }
-
-          send("after_remove_for_#{assoc_name}").<< ->(_, model, assoc){
-            model.class.delta_tracker.send :persist_or_cache!, model, {
-              name: assoc_name,
-              action: "R",
-              timestamp: Time.now.to_i,
-              object: { key => assoc.send(key) }
-            }
-          }
-        end
-      end
-
-      @has_one_associations.each do |assoc_name, reflection|
+      @trackable_fields[:has_one_associations].each do |assoc_name, reflection|
         key = reflection.association_primary_key
         # TODO build_#{assoc}
 
         ["#{assoc_name}=", "create_#{assoc_name}"].each do |method|
-          @klass.class_eval %Q{
+          @trackable_class.class_eval %Q{
             def #{method}(*args, &block)
               super(*args, &block).tap do |assoc|
                 return unless assoc.persisted?
@@ -86,7 +35,7 @@ module Delta
       end
 
       # Track attributes and belongs_to assocs via AM::Dirty
-      @klass.class_eval do
+      @trackable_class.class_eval do
         after_update do
           self.class.delta_tracker.send :persist_attrs!, self
         end
@@ -103,7 +52,7 @@ module Delta
 
       return if model.changes.empty?
 
-      @attributes.keys.each do |col|
+      @trackable_fields[:attributes].keys.each do |col|
         next unless changed_column = model.changes[col]
 
         deltas << {
@@ -115,7 +64,7 @@ module Delta
       end
 
       # TODO: polymorphic
-      @belongs_to_associations.each do |name, reflection|
+      @trackable_fields[:belongs_to_associations].each do |name, reflection|
         key = reflection.foreign_key
 
         next unless changed_assoc = model.changes[key]
@@ -151,24 +100,43 @@ module Delta
       end
     end
 
-    def build_attributes
-      @attributes = @klass.columns_hash.select do |k, _|
-        @field_names.include? k
+    def build_trackable_fields
+      @field_names.each do |field_name|
+        add_trackable_field(field_name)
       end
     end
 
-    def build_associations
-      @klass.reflections.each do |assoc_name, reflection|
-        if @field_names.include?(assoc_name)
-          case reflection.macro
-          when :has_many
-            @has_many_associations[assoc_name] = reflection
-          when :belongs_to
-            @belongs_to_associations[assoc_name] = reflection
-          when :has_one
-            @has_one_associations[assoc_name] = reflection
-          end
-        end
+    def add_trackable_field(field_name)
+      if attr = @trackable_class.columns_hash[field_name]
+        add_attribute(field_name, attr)
+      elsif reflection = @trackable_class.reflections[field_name]
+        add_association(field_name, reflection)
+      else
+        raise NonTrackableField.new(field_name)
+      end
+    end
+
+    def add_attribute(field_name, attr)
+      @trackable_fields[:attributes] ||= {}
+      @trackable_fields[:attributes][field_name] = attr
+    end
+
+    def add_association(field_name, reflection)
+      assert_reflection_macro!(field_name, reflection)
+
+      key = "#{reflection.macro}_associations".to_sym
+
+      @trackable_fields[key] ||= {}
+      @trackable_fields[key][field_name] = if reflection.macro == :has_many
+                                             HasMany.create(@trackable_class, field_name, reflection)
+                                           else
+                                             reflection
+                                           end
+    end
+
+    def assert_reflection_macro!(field_name, reflection)
+      unless [:has_many, :belongs_to, :has_one].include?(reflection.macro)
+        raise UnsupportedAssotiationType.new(field_name)
       end
     end
   end

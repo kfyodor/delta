@@ -86,7 +86,7 @@ describe "Integration test" do
         .to eq({ "id" => order.image.id })
     end
 
-    it 'tracks has_one assotiation added by create_assoc' do
+    it 'tracks has_one association added by create_assoc' do
       expect {
         order.create_image url: 'whatever'
       }.to change(order.deltas, :count).by 1
@@ -94,6 +94,16 @@ describe "Integration test" do
       expect(last_delta_by_name[order, 'image'])
         .to eq({ "id" => order.image.id })
     end
+
+    # it 'tracks has_one association added by build_assoc' do
+    #   expect {
+    #     order.build_image url: 'whatever'
+    #   }.not_to change(order.deltas, :count)
+
+    #   ap order.deltas_cache
+
+    #   expect { order.save }.to change(order.deltas, :count).by(1)
+    # end
   end
 
   context 'belongs_to' do
