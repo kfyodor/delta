@@ -8,11 +8,15 @@ module Delta
         return unless model.changes[key] || (polymorphic? && model.changes[type])
 
         assoc      = model.association_cache[@name] || model.send(@name)
-        key        = assoc.class.primary_key
-        serialized = { key => assoc.send(key) }.tap do |hash|
-          @opts[:type] = assoc.class.name if polymorphic?
-          @opts[:serialize].each { |col| hash[col] = assoc.send col }
-        end
+        key        = @reflection.klass.primary_key
+        serialized = if assoc
+                       { key => assoc.send(key) }.tap do |hash|
+                         @opts[:type] = assoc.class.name if polymorphic?
+                         @opts[:serialize].each { |col| hash[col] = assoc.send col }
+                       end
+                     else
+                       { key => nil }
+                     end
 
         {
           name:      @name,
