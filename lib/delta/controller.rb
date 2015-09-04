@@ -3,11 +3,8 @@ module Delta
     def self.included(base)
       base.class_eval do
         prepend_before_filter do
-          Delta.current_user = send(Delta.config.controller_user_method)
-        end
-
-        after_filter do
-          Delta.current_user = nil
+          m = Delta.config.controller_user_method
+          Delta.current_user = send(m) if self.respond_to?(m)
         end
       end
     end
