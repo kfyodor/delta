@@ -4,15 +4,22 @@ class AnotherOrder < ActiveRecord::Base
   belongs_to :user
   # belongs_to :shop, polymorphic: true
 
-  has_one :image, foreign_key: 'order_id'
+  has_one :image
 
-  has_many :line_items, foreign_key: 'order_id'
+  has_many :line_items
   has_many :items, through: :line_items
 
   validates :address, presence: true
 
   track_deltas_on :address
-  track_deltas_on :items, serialize: [:name]
-  track_deltas_on :user,  serialize: [:name]
-  track_deltas_on :image, serialize: [:url]
+  track_deltas_on :items,      serialize: [:name]
+
+  track_deltas_on :user,       serialize: [:name]
+
+  track_deltas_on :image,      serialize: [:url],
+                               notify:    true
+
+  track_deltas_on :line_items, serialize: [:quantity],
+                               only:      [],
+                               notify:    true
 end

@@ -18,11 +18,14 @@ ActiveRecord::Schema.define(version: 1) do
   create_table :images, force: :cascade do |t|
     t.string :url
     t.integer :order_id
+    t.integer :another_order_id
     t.timestamps null: false
   end
 
   create_table :line_items, force: :cascade do |t|
     t.integer :order_id
+    t.integer :quantity, default: 1
+    t.integer :another_order_id
     t.integer :item_id
     t.timestamps null: false
   end

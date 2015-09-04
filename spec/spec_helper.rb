@@ -10,9 +10,9 @@ require 'rspec/rails'
 
 TestApp::Application.initialize!
 
-ActiveRecord::Migration.maintain_test_schema!
-
+require File.expand_path('spec/test_app/db/schema.rb')
 require File.expand_path('lib/generators/delta/templates/create_deltas.rb')
+
 CreateDeltas.new.change
 
 RSpec.configure do |c|

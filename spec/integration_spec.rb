@@ -170,5 +170,31 @@ describe "Integration test" do
           .to eq({ "id" => user.id, "name" => user.name })
       end
     end
+
+    context 'association changes' do
+      it 'tracks change of has_many assoc' do
+        order.items << Item.create(name: "Item")
+        li = order.line_items.first
+
+        expect {
+          li.update quantity: 2
+        }.to change(order.deltas, :count).by 1
+
+        expect(last_delta_by_name[order, "line_items"])
+          .to eq({"id" => li.id, "quantity" => 2})
+      end
+
+      it 'tracks change of has_one assoc' do
+        i = Image.create(url: "sample")
+        order.image = i
+
+        expect {
+          i.update url: "new_url"
+        }.to change(order.deltas, :count).by 1
+
+        expect(last_delta_by_name[order, "image"])
+          .to eq({"id" => i.id, "url" => "new_url"})
+      end
+    end
   end
 end

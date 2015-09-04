@@ -13,6 +13,8 @@ module Delta
             end
           }
         end
+
+        super
       end
     end
   end
