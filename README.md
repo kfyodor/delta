@@ -12,8 +12,17 @@ Yet another changes tracker/auditor for Rails' ActiveRecord.
 
 ## Installation
 
+Add `delta` to your Gemfile
+
 ```ruby
   gem 'delta', github: 'konukhov/delta'
+```
+
+Then generate a migration (or, if you're non-Rails user, copy it manually from lib/generators).
+
+```sh
+  bundle install
+  bundle exec rails g delta:create_talbe
 ```
 
 ## Usage
