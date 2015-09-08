@@ -73,3 +73,9 @@ module Delta
     end
   end
 end
+
+if defined?(ActiveRecord) && defined?(ActiveRecord::Base)
+  ActiveRecord::Base.send :include, Delta::Tracking
+else
+  raise "You can't use Delta without ActiveRecord."
+end
