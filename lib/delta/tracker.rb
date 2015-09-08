@@ -47,7 +47,7 @@ module Delta
       end
     end
 
-    def persist!(model, deltas)
+    def persist!(model, deltas = [])
       deltas = [deltas] unless deltas.is_a?(Array)
 
       model.cache_deltas(deltas)
