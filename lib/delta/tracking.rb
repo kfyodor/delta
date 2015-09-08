@@ -36,22 +36,30 @@ module Delta
 
     module ClassMethods
       def track_deltas(*fields, **opts)
-        init_delta_tracker(opts)
-        delta_tracker.add_trackable_fields(fields)
+        if init_delta_tracker_if_needed(opts)
+          delta_tracker.add_trackable_fields(fields)
+        end
       end
 
       def track_deltas_on(field, field_opts = {})
-        init_delta_tracker({})
-        delta_tracker.add_trackable_field(field.to_s, field_opts)
+        if init_delta_tracker_if_needed({})
+          delta_tracker.add_trackable_field(field.to_s, field_opts)
+        end
       end
 
       private
 
-      def init_delta_tracker(opts)
-        unless self.delta_tracker
+      def init_delta_tracker_if_needed(opts)
+        unless connection.table_exists?(table_name)
+          # TODO proper logging / errors
+          Rails.logger.warn("[Delta] `#{table_name}` doesn't exist: skipping initialization.")
+          return nil
+        end
+
+        delta_tracker || begin
           self.delta_tracker = Tracker.new(self, opts)
           Tracking.model_added(self)
-          self.delta_tracker.track!
+          delta_tracker.track!
         end
       end
     end

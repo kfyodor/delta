@@ -1,10 +1,6 @@
 module Delta
   module Adapter
     module ActiveRecord
-      def self.register(model)
-        model.send :include, Ext
-      end
-
       module Ext
         def self.included(base)
           klass_name = "Delta::Adapter::ActiveRecord::Model"

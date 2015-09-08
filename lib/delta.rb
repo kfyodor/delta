@@ -21,11 +21,13 @@ require 'delta/controller'
 
 require 'request_store'
 
+if defined?(Rails)
+  require 'delta/railtie'
+end
+
 # TODO:
 #   - track associations added via build_assoc. we need to cache them and then somehow
-#     get their data from model.association_cache???
 #   - customize user model name
-#   - customize associations columns for serialization
 #   - different persistance options: redis, mq, kafka, whatever (active record is default)
 
 module Delta
@@ -70,12 +72,4 @@ module Delta
       @message = "`#{field_name}` is already trackable"
     end
   end
-end
-
-if defined?(ActiveRecord) && defined?(ActiveRecord::Base)
-  ActiveRecord::Base.send :include, Delta::Tracking
-end
-
-if defined?(ActionController) && defined?(ActionController::Base)
-  ActionController::Base.send :include, Delta::Controller
 end
