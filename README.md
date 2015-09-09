@@ -1,4 +1,4 @@
-# Δ (Delta)
+# Δ (Delta) [![Build Status](https://travis-ci.org/konukhov/delta.svg?branch=master)](https://travis-ci.org/konukhov/delta)
 
 Yet another changes tracker/auditor for Rails' ActiveRecord.
 
