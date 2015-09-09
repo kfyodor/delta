@@ -1,4 +1,23 @@
+# TODO: jruby,
+#       test against different Rails versions
+#       test against different databases
+
 language: ruby
+
+cache:
+  bundler: true
+
 rvm:
-  - 2.1.5
-before_install: gem install bundler -v 1.10.6
+  - 2.0.0
+  - 2.1
+  - 2.2
+
+addons:
+  postgresql: "9.4"
+
+before_script:
+  - cp spec/test_app/config/database.travis.yml spec/test_app/config/database.yml
+  - psql -c 'create database travis_ci_test;' -U postgres
+
+script:
+  - bundle exec rspec

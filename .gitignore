@@ -8,4 +8,4 @@
 /spec/reports/
 /tmp/
 #.*
-spec/config/database.yml
+spec/test_app/config/database.yml
