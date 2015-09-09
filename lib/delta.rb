@@ -51,7 +51,7 @@ module Delta
     end
 
     def store
-      @store ||= RequestStore.store
+      RequestStore
     end
   end
 

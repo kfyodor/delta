@@ -174,6 +174,7 @@ describe "Integration test" do
     context 'association changes' do
       it 'tracks change of has_many assoc' do
         order.items << Item.create(name: "Item")
+
         li = order.line_items.first
 
         expect {
@@ -195,6 +196,7 @@ describe "Integration test" do
         expect(last_delta_by_name[order, "image"])
           .to eq({"id" => i.id, "url" => "new_url"})
       end
+
     end
   end
 end
