@@ -18,14 +18,14 @@ describe Delta do
 
   it "current_user is thread-safe" do
     t1 = Thread.new do
-      Delta.current_user = :current_user_1
+      Delta.set_current_user_proc ->{ :current_user_1 }
       sleep 0.2
       expect(Delta.current_user).to eq :current_user_1
     end
 
     t2 = Thread.new do
       sleep 0.1
-      Delta.current_user = :current_user_2
+      Delta.set_current_user_proc ->{ :current_user_2 }
       expect(Delta.current_user).to eq :current_user_2
     end
 

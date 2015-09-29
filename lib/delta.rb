@@ -42,16 +42,22 @@ module Delta
       yield(config)
     end
 
-    def current_user=(user)
-      store[:current_user] = user
-    end
-
     def current_user
-      store[:current_user]
+      current_user_proc && current_user_proc.call
     end
 
     def store
       RequestStore
+    end
+
+    def set_current_user_proc(proc)
+      store[:current_user_proc] = proc
+    end
+
+    private
+
+    def current_user_proc
+      store[:current_user_proc]
     end
   end
 

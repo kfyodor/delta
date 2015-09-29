@@ -56,11 +56,14 @@ module Delta
           return nil
         end
 
-        delta_tracker || begin
-          self.delta_tracker = Tracker.new(self, opts)
-          Tracking.model_added(self)
-          delta_tracker.track!
-        end
+        delta_tracker || init_delta_tracker(opts)
+      end
+
+      def init_delta_tracker(opts)
+        self.delta_tracker = Tracker.new(self, opts)
+
+        Tracking.model_added(self)
+        delta_tracker.track!
       end
     end
   end
