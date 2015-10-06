@@ -8,8 +8,17 @@ module Delta
 
         base.class_eval do
           before_update :cache_delta_fields!
-          after_commit :persist_delta_cache!, on: :update
-          after_commit :reset_deltas_cache!, on: [:destroy, :create]
+
+          if Delta.config.dont_use_after_commit_callbacks
+            # Might be useful in app's specs, for example
+            after_update  :persist_delta_cache!
+
+            after_destroy :reset_deltas_cache!
+            after_create  :reset_deltas_cache!
+          else
+            after_commit :persist_delta_cache!, on: :update
+            after_commit :reset_deltas_cache!, on: [:destroy, :create]
+          end
         end
       end
 
