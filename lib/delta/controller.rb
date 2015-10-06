@@ -5,7 +5,7 @@ module Delta
         before_action do
           Delta.set_current_user_proc ->{
             begin
-              self.send Delta.config.controller_method
+              self.send Delta.config.controller_user_method
             rescue => e
               Rails.logger.info "[Delta] Unable to get current " +
                                 "user (#{e.class}: #{e.message})"
