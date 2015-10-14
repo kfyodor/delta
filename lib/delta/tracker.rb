@@ -24,7 +24,9 @@ module Delta
       elsif reflection = @trackable_class.reflections[field_name]
         add_association(field_name, reflection, opts)
       else
-        raise NonTrackableField.new(field_name)
+        Rails.logger.debug "[Delta] Don't know how to track " +
+                           "field `#{field}` because it's "   +
+                           "not in a database: ignoring."
       end
     end
 
