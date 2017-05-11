@@ -50,7 +50,7 @@ module Delta
       private
 
       def init_delta_tracker_if_needed(opts)
-        unless connection.table_exists?(table_name)
+        unless connection.data_source_exists?(table_name)
           # TODO proper logging / errors
           Rails.logger.warn("[Delta] `#{table_name}` doesn't exist: skipping initialization.")
           return nil
