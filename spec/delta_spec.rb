@@ -1,36 +1,36 @@
 require 'spec_helper'
 
 describe Delta do
-  it "has config" do
+  it 'has config' do
     expect(Delta.config).to be_instance_of(Delta::Config)
   end
 
-  it "is configurable" do
+  it 'is configurable' do
     Delta.configure do |c|
-      c.controller_user_method = :current_admin
+      c.controller_profile_method = :current_admin
     end
 
-    expect(Delta.config.controller_user_method)
+    expect(Delta.config.controller_profile_method)
       .to eq(:current_admin)
 
     Delta.class_eval { @@config = Delta::Config.new }
   end
 
-  it "current_user is thread-safe" do
+  it 'current_user is thread-safe' do
     t1 = Thread.new do
-      Delta.set_current_user_proc ->{ :current_user_1 }
+      Delta.set_current_profile_proc ->{ :current_user_1 }
       sleep 0.2
-      expect(Delta.current_user).to eq :current_user_1
+      expect(Delta.current_profile).to eq :current_user_1
     end
 
     t2 = Thread.new do
       sleep 0.1
-      Delta.set_current_user_proc ->{ :current_user_2 }
-      expect(Delta.current_user).to eq :current_user_2
+      Delta.set_current_profile_proc ->{ :current_user_2 }
+      expect(Delta.current_profile).to eq :current_user_2
     end
 
     [t1, t2].map &:join
 
-    expect(Delta.current_user).to eq nil
+    expect(Delta.current_profile).to eq nil
   end
 end

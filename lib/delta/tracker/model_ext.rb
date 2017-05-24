@@ -53,7 +53,7 @@ module Delta
             .merge(delta_tracker.attributes)
 
           fields.each do |name, field|
-            if serialized = field.serialize(self, "C", timestamp: ts)
+            if serialized = field.serialize(self, 'C', timestamp: ts)
               deltas << serialized
             end
           end
@@ -66,15 +66,15 @@ module Delta
 
       module DeltaAssociationsMethods
         def delta_association_add(assoc_name, obj)
-          delta_association_invoke_action(assoc_name, obj, "A")
+          delta_association_invoke_action(assoc_name, obj, 'A')
         end
 
         def delta_association_remove(assoc_name, obj)
-          delta_association_invoke_action(assoc_name, obj, "R")
+          delta_association_invoke_action(assoc_name, obj, 'R')
         end
 
         def delta_association_change(assoc_name, obj)
-          delta_association_invoke_action(assoc_name, obj, "C")
+          delta_association_invoke_action(assoc_name, obj, 'C')
         end
 
         private

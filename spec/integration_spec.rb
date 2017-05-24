@@ -1,26 +1,26 @@
 require 'spec_helper'
 require 'ap'
 
-describe "Integration test" do
-  let(:user)   { User.create(name: "user") }
+describe 'Integration test' do
+  let(:user)   { User.create(name: 'user') }
   let(:items)  { [0, 1].map { |i| Item.create name: "Item #{i}" } }
 
   let(:last_delta_by_name) do
     ->(order, name){
       order.deltas.last.object.select do |o|
         o['name'] == name
-      end.last["object"]
+      end.last['object']
     }
   end
 
-  context "track deltas" do
-    let!(:order) { Order.create(address: "Address", items: items, user: user) }
-    let!(:empty_order) { Order.create address: "addr" }
+  context 'track deltas' do
+    let!(:order) { Order.create(address: 'Address', items: items, user: user) }
+    let!(:empty_order) { Order.create address: 'addr' }
 
 
     context 'attributes' do
       it 'tracks arrtibute change' do
-        addr = "new address"
+        addr = 'new address'
         expect { order.update(address: addr) }
           .to change(order.deltas, :count).by(1)
 
@@ -31,12 +31,12 @@ describe "Integration test" do
     context 'has_many associations' do
       context 'add' do
         it 'tracks has_many through association add' do
-          item = Item.create(name: "New item")
+          item = Item.create(name: 'New item')
 
           expect { order.items << item }
             .to change { order.reload.deltas.count }.by(1)
 
-          expect(last_delta_by_name[order, 'items']).to eq({ "id" => item.id })
+          expect(last_delta_by_name[order, 'items']).to eq({ 'id' => item.id })
         end
 
         it 'tracks has_many associations add via assoc_ids=' do
@@ -82,7 +82,7 @@ describe "Integration test" do
         }.to change(order.deltas, :count).by 1
 
         expect(last_delta_by_name[order, 'image'])
-          .to eq({ "id" => order.image.id })
+          .to eq({ 'id' => order.image.id })
       end
 
       it 'tracks has_one association added by create_assoc' do
@@ -91,7 +91,7 @@ describe "Integration test" do
         }.to change(order.deltas, :count).by 1
 
         expect(last_delta_by_name[order, 'image'])
-          .to eq({ "id" => order.image.id })
+          .to eq({ 'id' => order.image.id })
       end
 
       # it 'tracks has_one association added by build_assoc' do
@@ -107,12 +107,12 @@ describe "Integration test" do
 
     context 'belongs_to' do
       it 'tracks belongs_to associations' do
-        user = User.create(name: "New user")
+        user = User.create(name: 'New user')
 
         expect { order.update user: user }
           .to change(order.deltas, :count).by 1
 
-        expect(last_delta_by_name[order, 'user']).to eq({ "id" => user.id })
+        expect(last_delta_by_name[order, 'user']).to eq({ 'id' => user.id })
       end
     end
 
@@ -120,60 +120,60 @@ describe "Integration test" do
       o = Order.create(address: 'addr', items: items, user: user)
 
       o.address = nil
-      o.user    = User.create(name: "new user")
+      o.user    = User.create(name: 'new user')
 
       expect { o.save }.not_to change(o.deltas, :count)
 
-      o.address = "new address"
+      o.address = 'new address'
       expect { o.save }.to change(o.deltas, :count).by(1)
 
       expect(o.deltas.last.object.map {|o| o['name'] } )
-        .to contain_exactly("address", "user")
+        .to contain_exactly('address', 'user')
     end
   end
 
-  context "track deltas on" do
-    let!(:order) { AnotherOrder.create(address: "Address", items: items, user: user) }
+  context 'track deltas on' do
+    let!(:order) { AnotherOrder.create(address: 'Address', items: items, user: user) }
     # let!(:empty_order) { AnotherOrder.create address: "addr" }
 
     context 'has_many' do
       it 'tracks and serializes association' do
-        item = Item.create(name: "New item")
+        item = Item.create(name: 'New item')
 
         expect { order.items << item }
           .to change { order.reload.deltas.count }.by(1)
 
         expect(last_delta_by_name[order, 'items'])
-          .to eq({ "id" => item.id, "name" => item.name })
+          .to eq({ 'id' => item.id, 'name' => item.name })
       end
     end
 
-    context "has_one" do
+    context 'has_one' do
       it 'tracks has_one association' do
         expect {
           order.image = Image.create(url: 'whatever')
         }.to change(order.deltas, :count).by 1
 
         expect(last_delta_by_name[order, 'image'])
-          .to eq({ "id" => order.image.id, "url" => order.image.url })
+          .to eq({ 'id' => order.image.id, 'url' => order.image.url })
       end
     end
 
-    context "belongs_to" do
+    context 'belongs_to' do
       it 'tracks belongs_to associations' do
-        user = User.create(name: "New user")
+        user = User.create(name: 'New user')
 
         expect { order.update user: user }
           .to change(order.deltas, :count).by 1
 
         expect(last_delta_by_name[order, 'user'])
-          .to eq({ "id" => user.id, "name" => user.name })
+          .to eq({ 'id' => user.id, 'name' => user.name })
       end
     end
 
     context 'association changes' do
       it 'tracks change of has_many assoc' do
-        order.items << Item.create(name: "Item")
+        order.items << Item.create(name: 'Item')
 
         li = order.line_items.first
 
@@ -181,20 +181,20 @@ describe "Integration test" do
           li.update quantity: 2
         }.to change(order.deltas, :count).by 1
 
-        expect(last_delta_by_name[order, "line_items"])
-          .to eq({"id" => li.id, "quantity" => 2})
+        expect(last_delta_by_name[order, 'line_items'])
+          .to eq({ 'id' => li.id, 'quantity' => 2})
       end
 
       it 'tracks change of has_one assoc' do
-        i = Image.create(url: "sample")
+        i = Image.create(url: 'sample')
         order.image = i
 
         expect {
-          i.update url: "new_url"
+          i.update url: 'new_url'
         }.to change(order.deltas, :count).by 1
 
-        expect(last_delta_by_name[order, "image"])
-          .to eq({"id" => i.id, "url" => "new_url"})
+        expect(last_delta_by_name[order, 'image'])
+          .to eq({ 'id' => i.id, 'url' => 'new_url' })
       end
 
     end

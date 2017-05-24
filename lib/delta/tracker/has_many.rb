@@ -2,7 +2,7 @@ module Delta
   class Tracker
     class HasMany < Association
       def track!
-        actions = ["add", "remove"]
+        actions = %w(add remove)
 
         if @opts[:only].is_a?(Array)
           actions = @opts[:only].map(&:to_s) & actions
