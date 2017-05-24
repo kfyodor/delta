@@ -1,5 +1,5 @@
 class AnotherOrder < ActiveRecord::Base
-  self.table_name = "orders"
+  self.table_name = 'orders'
 
   belongs_to :user
   # belongs_to :shop, polymorphic: true

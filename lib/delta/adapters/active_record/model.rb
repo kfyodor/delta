@@ -3,8 +3,8 @@ module Delta
     module ActiveRecord
       module Ext
         def self.included(base)
-          klass_name = "Delta::Adapter::ActiveRecord::Model"
-          _scope     = -> { order('created_at').includes(:user) }
+          klass_name = 'Delta::Adapter::ActiveRecord::Model'
+          _scope     = -> { order('created_at').includes(:profile) }
 
           base.has_many :deltas, _scope,
                         class_name: klass_name,
@@ -13,12 +13,12 @@ module Delta
       end
 
       class Model < ::ActiveRecord::Base
-        self.table_name = "deltas"
+        self.table_name = 'deltas'
 
         scope :newest, -> { reorder('created_at desc') }
 
         belongs_to :model, polymorphic: true
-        belongs_to :user
+        belongs_to :profile, polymorphic: true
 
         def readonly?
           persisted?

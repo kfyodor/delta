@@ -43,7 +43,7 @@ module Delta
       # And also think about tracking changes of polymorphic assocs.
       def serialize_change(obj)
         if (obj.changes.keys & @opts[:serialize]).any?
-          serialize(obj, "C")
+          serialize(obj, 'C')
         end
       end
 
@@ -82,7 +82,7 @@ module Delta
             []
           end
 
-          o[:only]   = opts[:only] || ["add", "remove"]
+          o[:only]   = opts[:only] || %w(add remove)
           o[:notify] = opts[:notify] || false
         end
       end

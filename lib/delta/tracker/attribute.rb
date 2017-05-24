@@ -12,7 +12,7 @@ module Delta
 
         {
           name: @name,
-          action: "C",
+          action: 'C',
           timestamp: opts[:timestamp] || Time.now.to_i,
           object: changed.last
         }
