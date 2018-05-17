@@ -64,7 +64,7 @@ module Delta
           after_update do
             t     = #{@trackable_class}.delta_tracker
             delta = t.trackable_fields['#{@name}'].serialize_change(self)
-            model = association_cache['#{assoc}'] || send('#{assoc}')
+            model = send('#{assoc}')
 
             t.persist!(model, delta) if delta
           end
