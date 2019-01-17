@@ -1,4 +1,4 @@
-class CreateDeltas < ActiveRecord::Migration
+class CreateDeltas < ActiveRecord::Migration[4.2]
   def change
     create_table :deltas, force: :cascade do |t|
       # TODO: custom users key name
