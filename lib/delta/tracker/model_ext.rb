@@ -43,7 +43,7 @@ module Delta
 
       module DeltaFieldsMethods
         def cache_delta_fields!
-          return if changes.empty?
+          return unless has_changes_to_save?
 
           ts     = Time.now.to_i
           deltas = []

@@ -16,6 +16,5 @@ require File.expand_path('lib/generators/delta/templates/create_deltas.rb')
 CreateDeltas.new.change
 
 RSpec.configure do |c|
-  require 'test_after_commit'
   c.use_transactional_fixtures = true
 end
