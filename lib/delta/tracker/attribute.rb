@@ -8,7 +8,7 @@ module Delta
       def track!; end
 
       def serialize(model, action, opts = {})
-        return unless changed = model.changes[@name]
+        return unless changed = model.changes_to_save[@name]
 
         {
           name: @name,

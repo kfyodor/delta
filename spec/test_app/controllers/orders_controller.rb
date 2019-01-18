@@ -1,7 +1,7 @@
 class OrdersController < ActionController::Base
   def update_address
     Order.last.update address: "new address"
-    render text: "ok"
+    render plain: "ok"
   end
 
   protected

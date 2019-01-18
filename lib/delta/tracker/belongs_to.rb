@@ -5,9 +5,9 @@ module Delta
       end
 
       def serialize(model, action, opts = {})
-        return unless model.changes[key] || (polymorphic? && model.changes[type])
+        return unless model.saved_changes[key] || (polymorphic? && model.saved_changes[type])
 
-        assoc      = model.association_cache[@name] || model.send(@name)
+        assoc      = model.send(@name)
         key        = @reflection.klass.primary_key
         serialized = if assoc
                        { key => assoc.send(key) }.tap do |hash|

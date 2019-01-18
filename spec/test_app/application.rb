@@ -13,7 +13,6 @@ module TestApp
     config.consider_all_requests_local = true
     config.eager_load = false
     config.encoding = "utf-8"
-    config.active_record.raise_in_transactional_callbacks = true
 
     config.paths["app/controllers"] << "#{TEST_APP_PATH}/controllers"
     config.paths["app/models"] << "#{TEST_APP_PATH}/models"

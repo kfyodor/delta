@@ -42,7 +42,7 @@ module Delta
       # loosing the main idea and without huge performance bottlenecks.
       # And also think about tracking changes of polymorphic assocs.
       def serialize_change(obj)
-        if (obj.changes.keys & @opts[:serialize]).any?
+        if (obj.saved_changes.keys & @opts[:serialize]).any?
           serialize(obj, "C")
         end
       end
@@ -64,7 +64,7 @@ module Delta
           after_update do
             t     = #{@trackable_class}.delta_tracker
             delta = t.trackable_fields['#{@name}'].serialize_change(self)
-            model = association_cache['#{assoc}'] || send('#{assoc}')
+            model = send('#{assoc}')
 
             t.persist!(model, delta) if delta
           end

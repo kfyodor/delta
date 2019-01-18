@@ -53,17 +53,17 @@ module Delta
       deltas = [deltas] unless deltas.is_a?(Array)
 
       model.cache_deltas(deltas)
+      return if model.deltas_cache.empty?
+      return unless model.persisted?
 
-      if model.persisted?
-        Delta.config.adapters.each do |adapter|
-          "#{adapter}::Store"
-            .constantize
-            .new(model, model.deltas_cache)
-            .persist!
-        end
-
-        model.reset_deltas_cache!
+      Delta.config.adapters.each do |adapter|
+        "#{adapter}::Store"
+          .constantize
+          .new(model, model.deltas_cache)
+          .persist!
       end
+
+      model.reset_deltas_cache!
     end
 
     private

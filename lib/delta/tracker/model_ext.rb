@@ -7,17 +7,17 @@ module Delta
         base.send :include, DeltaAssociationsMethods
 
         base.class_eval do
-          before_update :cache_delta_fields!
+          before_save :cache_delta_fields!
 
           if Delta.config.dont_use_after_commit_callbacks
             # Might be useful in app's specs, for example
-            after_update  :persist_delta_cache!
+            after_save  :persist_delta_cache!
 
             after_destroy :reset_deltas_cache!
             after_create  :reset_deltas_cache!
           else
-            after_commit :persist_delta_cache!, on: :update
-            after_commit :reset_deltas_cache!, on: [:destroy, :create]
+            after_commit :persist_delta_cache!, on: [:create, :update]
+            after_commit :reset_deltas_cache!, on: :destroy
           end
         end
       end
@@ -43,7 +43,7 @@ module Delta
 
       module DeltaFieldsMethods
         def cache_delta_fields!
-          return if changes.empty?
+          return unless has_changes_to_save?
 
           ts     = Time.now.to_i
           deltas = []
